@@ -1,70 +1,181 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
-}
+import React, { useRef, useState } from 'react';
+import Typo from '@/components/Typo';
+import ViewTemplate from '@/components/ViewTemplate';
+import {
+  StyleSheet,
+  View,
+  TextInput,
+  Text,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
+import Checkbox from 'expo-checkbox';
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    paddingLeft: 12,
+    paddingRight: 12,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+  todoContainer: {
+    rowGap: 16,
+    width: '100%',
+  },
+  addArea: {
+    flexDirection: 'row',
+    columnGap: 16,
+    height: 40,
+  },
+  input: {
+    width: Dimensions.get('window').width - 140,
+    borderRadius: 4,
+    borderWidth: 1,
+    height: 50,
+    fontSize: 20,
+    paddingHorizontal: 4,
+  },
+  addBtnBackground: {
+    backgroundColor: '#d0d0d0',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 4,
+    marginBottom: 20,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addBtnText: {
+    color: '#000',
+    fontSize: 12,
+  },
+  todoListArea: {
+    rowGap: 8,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  left: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    columnGap: 4,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  todoText: {
+    width: Dimensions.get('window').width - 148,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  deleteBtnBg: {
+    backgroundColor: '#d0d0d0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 4,
+  },
+  deleteBtnText: {
+    color: '#000',
+    fontSize: 12,
   },
 });
+
+export default function HomeScreen() {
+  const inputRef = useRef<TextInput | null>(null);
+
+  const [value, setValue] = useState('');
+  const [list, setList] = useState<
+    { key: number; value: string; checked: boolean }[]
+  >([]);
+
+  const onChangeText = (v: string) => {
+    setValue(v);
+  };
+
+  const onAdd = () => {
+    if (value === '') return;
+
+    setList([
+      ...list,
+      {
+        key: new Date().getTime(),
+        value,
+        checked: false,
+      },
+    ]);
+
+    setValue('');
+
+    inputRef.current?.blur();
+  };
+
+  const onDelete = (idx: number) => {
+    setList((prev) => prev.filter((_, i) => idx !== i));
+  };
+
+  const onChangeCheck = (idx: number, checked: boolean) => {
+    setList((prev) =>
+      prev.map((state, i) => ({
+        ...state,
+        checked: i === idx ? checked : state.checked,
+      })),
+    );
+  };
+
+  return (
+    <ViewTemplate
+      style={{
+        padding: 0,
+        rowGap: 14,
+        backgroundColor: '#fff',
+        height: '100%',
+      }}
+    >
+      <Typo typo='t'>Todo List</Typo>
+      <View style={styles.todoContainer}>
+        <View style={styles.addArea}>
+          <TextInput
+            style={styles.input}
+            onChangeText={onChangeText}
+            value={value}
+            ref={inputRef}
+          ></TextInput>
+          <TouchableOpacity onPress={onAdd} style={styles.addBtnBackground}>
+            <Text style={styles.addBtnText}>Add</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.todoListArea}>
+          {list.map(({ value, checked, key }, idx) => {
+            return (
+              <View style={styles.row} key={`${idx}-${key}`}>
+                <View style={styles.left}>
+                  <Checkbox
+                    value={checked}
+                    onValueChange={() => {
+                      onChangeCheck(idx, !checked);
+                    }}
+                  ></Checkbox>
+                  <Text
+                    style={{
+                      ...styles.todoText,
+                      textDecorationLine: checked ? 'line-through' : 'none',
+                    }}
+                  >
+                    {value}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.deleteBtnBg}
+                  onPress={() => {
+                    onDelete(idx);
+                  }}
+                >
+                  <Text style={styles.deleteBtnText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    </ViewTemplate>
+  );
+}
